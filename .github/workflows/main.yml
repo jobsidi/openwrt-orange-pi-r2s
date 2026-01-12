@@ -1,0 +1,47 @@
+name: Build OrangePi R2S Packages
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: openwrt-24.10
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang flex bison g++ gawk gcc-multilib g++-multilib \
+          gettext git libncurses-dev libssl-dev python3-distutils rsync unzip zlib1g-dev swig libpython3-dev
+
+      - name: Update & Install Feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Generate Full Config
+        run: |
+          if [ -f ky1.config ]; then
+            cp ky1.config .config
+          else
+            echo "CONFIG_TARGET_ky=y" > .config
+            echo "CONFIG_TARGET_ky_riscv64=y" >> .config
+            echo "CONFIG_TARGET_ky_riscv64_DEVICE_x1_orangepi-r2s=y" >> .config
+            echo "CONFIG_ALL_KMODS=y" >> .config
+            echo "CONFIG_ALL=y" >> .config
+          fi
+          make defconfig
+
+      - name: Compile Packages
+        run: |
+          make package/compile -j$(nproc) IGNORE_ERRORS=m V=s
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: opkg-repository
+          path: bin/packages/ky_riscv64/
