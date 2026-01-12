@@ -36,5 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: opkg-repository
-          # ПУТЬ К АРТЕФАКТАМ ОБНОВЛЕН под вашу архитектуру 'ky_riscv64'
           path: bin/packages/ky_riscv64/
